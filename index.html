@@ -50,12 +50,26 @@
       }
 
 
+      function check_secure_context() {
+        const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+        if (!window.isSecureContext && !isLocalhost) {
+          alert('This app must be served over HTTPS (or localhost) to access the camera. Vercel HTTPS is required.');
+          return false;
+        }
+        return true;
+      }
+
+
       // entry point:
       function main() {
+        if (!check_secure_context()) {
+          return;
+        }
+
         JEELIZVTOWIDGET.start({
           isShadow: get_isShadow(),
           sku: get_initialSKU(),
-          searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target.png',
+          searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target512.jpg',
           searchImageColor: 0xeeeeee,
           callbackReady: function(){
             console.log('INFO: JEELIZVTOWIDGET is ready :)');
@@ -172,7 +186,7 @@
         <div id='JeelizVTOWidgetLoading'>
            <div class='JeelizVTOWidgetLoadingText'>
               LOADING...
-            </div>
+           </div>
         </div>
         <!-- END LOADING -->
 
@@ -180,4 +194,3 @@
     </div>
   </body>
 </html>
- 
