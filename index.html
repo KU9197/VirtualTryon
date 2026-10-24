@@ -63,7 +63,9 @@ const sku = params.get('sku');
 
 if (sku) {
   console.log('Loading sunglasses:', sku);
-  JEELIZVTOWIDGET.load(sku);
+  JEELIZVTOWIDGET.load(sku, function () {
+  console.log('SUCCESS: Sunglasses model loaded:', sku);
+});
 } else {
   JEELIZVTOWIDGET.load_modelStandalone(
     'glasses3D/glasses1.json'
