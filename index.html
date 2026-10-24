@@ -34,13 +34,16 @@
         glasses3Textured: 'glasses3D/glasses3Textured.json'
       };
 
-      function get_model_from_query() {
-        const params = new URLSearchParams(window.location.search);
-        const sku = params.get('sku');
+    function getModelUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const sku = params.get('sku');
 
-        if (!sku) {
-          return DEFAULT_MODEL;
-        }
+  if (!sku) {
+    return 'glasses3D/glasses1.json';
+  }
+
+  return '/api/model?sku=' + encodeURIComponent(sku);
+}
 
         // Allow direct model file paths too.
         if (sku.toLowerCase().endsWith('.json')) {
