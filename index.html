@@ -58,7 +58,17 @@
           searchImageColor: 0xeeeeee,
           callbackReady: function () {
             console.log('INFO: JEELIZVTOWIDGET is ready :)');
-            JEELIZVTOWIDGET.load_modelStandalone(getModelUrl());
+            const params = new URLSearchParams(window.location.search);
+const sku = params.get('sku');
+
+if (sku) {
+  console.log('Loading sunglasses:', sku);
+  JEELIZVTOWIDGET.load(sku);
+} else {
+  JEELIZVTOWIDGET.load_modelStandalone(
+    'glasses3D/glasses1.json'
+  );
+}
           },
           onError: function (errorLabel) {
             console.error('Jeeliz error:', errorLabel);
