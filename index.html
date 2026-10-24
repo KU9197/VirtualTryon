@@ -1,122 +1,223 @@
+
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>JEELIZ VTO WIDGET INTEGRATION DEMO</title>
-    <meta charset='utf-8' />
+<head>
+  <title>JEELIZ VTO WIDGET INTEGRATION DEMO</title>
+  <meta charset="utf-8" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"/>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
+  />
 
-    <script src='dist/JeelizVTOWidget.js'></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
-    <link rel='stylesheet' href='css/JeelizVTOWidget.css' />
+  <script src="dist/JeelizVTOWidget.js"></script>
 
-    <script>
-      let _isResized = false;
+  <script
+    defer
+    src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"
+  ></script>
 
-      function getModelUrl() {
-        const params = new URLSearchParams(window.location.search);
-        const sku = params.get('sku');
+  <link
+    href="https://fonts.googleapis.com/css?family=Roboto+Condensed"
+    rel="stylesheet"
+  />
 
-        if (!sku) {
-          return 'glasses3D/glasses1.json';
-        }
+  <link
+    rel="stylesheet"
+    href="css/JeelizVTOWidget.css"
+  />
 
-        return '/api/model?sku=' + encodeURIComponent(sku);
+  <script>
+    let _isResized = false;
+
+    // Resize the camera widget
+    function test_resizeCanvas() {
+      const halfHeightPx =
+        Math.round(window.innerHeight / 2) + 'px';
+
+      const domWidget =
+        document.getElementById('JeelizVTOWidget');
+
+      domWidget.style.maxHeight =
+        _isResized ? 'none' : halfHeightPx;
+
+      _isResized = !_isResized;
+    }
+
+    // Check whether shadows should be displayed
+    function get_isShadow() {
+      const params = new URLSearchParams(
+        window.location.search
+      );
+
+      return !params.get('isHideShadow');
+    }
+
+    // Check HTTPS for camera access
+    function check_secure_context() {
+      const isLocalhost = [
+        'localhost',
+        '127.0.0.1',
+        '::1'
+      ].includes(window.location.hostname);
+
+      if (!window.isSecureContext && !isLocalhost) {
+        alert(
+          'This application requires HTTPS to access the camera.'
+        );
+        return false;
       }
 
-      function test_resizeCanvas() {
-        let halfHeightPx = Math.round(window.innerHeight / 2).toString() + 'px';
-        const domWidget = document.getElementById('JeelizVTOWidget');
-        domWidget.style.maxHeight = (_isResized) ? 'none' : halfHeightPx;
-        _isResized = !_isResized;
+      return true;
+    }
+
+    // Display initialization errors
+    function showError(message) {
+      console.error('Virtual Try-On Error:', message);
+
+      const loadingText = document.querySelector(
+        '.JeelizVTOWidgetLoadingText'
+      );
+
+      if (loadingText) {
+        loadingText.textContent = 'ERROR: ' + message;
+      }
+    }
+
+    // Main application
+    function main() {
+      if (!check_secure_context()) {
+        return;
       }
 
-      function get_isShadow() {
-        const queryString = window.location.search;
-        const URLParams = new URLSearchParams(queryString);
-        return URLParams.get('isHideShadow') ? false : true;
-      }
+      // Read the sunglasses SKU from the URL
+      const params = new URLSearchParams(
+        window.location.search
+      );
 
-      function check_secure_context() {
-        const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
-        if (!window.isSecureContext && !isLocalhost) {
-          alert('This app must be served over HTTPS (or localhost) to access the camera. Vercel HTTPS is required.');
-          return false;
-        }
-        return true;
-      }
+      const sku = params.get('sku');
 
-      function main() {
-        if (!check_secure_context()) {
-          return;
-        }
+      console.log('Selected SKU:', sku || 'default');
 
-        JEELIZVTOWIDGET.start({
-          isShadow: get_isShadow(),
-          searchImageMask: 'images/target.png',
-          searchImageColor: 0xeeeeee,
-          callbackReady: function () {
-            console.log('INFO: JEELIZVTOWIDGET is ready :)');
-            const params = new URLSearchParams(window.location.search);
-const sku = params.get('sku');
+      // Configure Jeeliz
+      const options = {
+        isRequestCamera: true,
+        isShadow: get_isShadow(),
+        searchImageMask: 'images/target.png',
+        searchImageColor: 0xeeeeee,
 
-if (sku) {
-  console.log('Loading sunglasses:', sku);
-  JEELIZVTOWIDGET.load(sku, function () {
-  console.log('SUCCESS: Sunglasses model loaded:', sku);
-});
-} else {
-  JEELIZVTOWIDGET.load_modelStandalone(
-    'glasses3D/glasses1.json'
-  );
-}
-          },
-          onError: function (errorLabel) {
-            console.error('Jeeliz error:', errorLabel);
+        // Called when camera access succeeds
+        onWebcamGet: function () {
+          console.log('Camera stream acquired');
+        },
 
-            if (errorLabel === 'INVALID_SKU') {
-              console.warn('Fallback to default local model');
-              JEELIZVTOWIDGET.load_modelStandalone('glasses3D/glasses1.json');
-            }
+        // Called when Jeeliz is ready
+        callbackReady: function () {
+          console.log(
+            'INFO: JEELIZVTOWIDGET is ready :)'
+          );
+
+          // Without a SKU, load the default local model
+          if (!sku) {
+            console.log('Loading default sunglasses');
+
+            JEELIZVTOWIDGET.load_modelStandalone(
+              'glasses3D/glasses1.json'
+            );
           }
-        });
+        },
+
+        // Handle errors
+        onError: function (errorLabel) {
+          console.error('Jeeliz error:', errorLabel);
+
+          if (errorLabel === 'INVALID_SKU') {
+            console.warn(
+              'Invalid SKU. Loading default model.'
+            );
+
+            JEELIZVTOWIDGET.load_modelStandalone(
+              'glasses3D/glasses1.json'
+            );
+
+            return;
+          }
+
+          showError(errorLabel);
+        }
+      };
+
+      // Set the initial sunglasses model
+      if (sku) {
+        options.sku = sku;
+        console.log('Requesting sunglasses:', sku);
       }
-    </script>
-  </head>
 
-  <body onload="main()">
-    <div class='content'>
-      <div class='header'>
-        <div class="headerTitle">
-          Jeeliz VTO Widget
-        </div>
-      </div>
+      // Start Jeeliz only once
+      JEELIZVTOWIDGET.start(options);
+    }
+  </script>
+</head>
 
-      <div id='JeelizVTOWidget'>
-        <canvas id='JeelizVTOWidgetCanvas'></canvas>
+<body onload="main()">
 
-        <div class='JeelizVTOWidgetControls JeelizVTOWidgetControlsTop'>
-          <button id='JeelizVTOWidgetAdjust'>
-            <div class="buttonIcon"><i class="fas fa-arrows-alt"></i></div>Adjust
-          </button>
+  <div class="content">
 
-          <button id='buttonResizeCanvas' onclick='test_resizeCanvas();'>
-            <div class="buttonIcon"><i class="fas fa-sync-alt"></i></div>Resize widget
-          </button>
-        </div>
-
-        <div id='JeelizVTOWidgetAdjustNotice'>
-          Move the glasses to adjust them.
-          <button class='JeelizVTOWidgetBottomButton' id='JeelizVTOWidgetAdjustExit'>Quit</button>
-        </div>
-
-        <div id='JeelizVTOWidgetLoading'>
-           <div class='JeelizVTOWidgetLoadingText'>
-              LOADING...
-           </div>
-        </div>
+    <div class="header">
+      <div class="headerTitle">
+        Jeeliz VTO Widget
       </div>
     </div>
-  </body>
+
+    <div id="JeelizVTOWidget">
+
+      <!-- Camera canvas -->
+      <canvas id="JeelizVTOWidgetCanvas"></canvas>
+
+      <!-- Top controls -->
+      <div class="JeelizVTOWidgetControls JeelizVTOWidgetControlsTop">
+
+        <button id="JeelizVTOWidgetAdjust">
+          <div class="buttonIcon">
+            <i class="fas fa-arrows-alt"></i>
+          </div>
+          Adjust
+        </button>
+
+        <button
+          id="buttonResizeCanvas"
+          onclick="test_resizeCanvas();"
+        >
+          <div class="buttonIcon">
+            <i class="fas fa-sync-alt"></i>
+          </div>
+          Resize widget
+        </button>
+
+      </div>
+
+      <!-- Glasses adjustment notice -->
+      <div id="JeelizVTOWidgetAdjustNotice">
+        Move the glasses to adjust them.
+
+        <button
+          class="JeelizVTOWidgetBottomButton"
+          id="JeelizVTOWidgetAdjustExit"
+        >
+          Quit
+        </button>
+      </div>
+
+      <!-- Loading screen -->
+      <div id="JeelizVTOWidgetLoading">
+        <div class="JeelizVTOWidgetLoadingText">
+          LOADING...
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
 </html>
