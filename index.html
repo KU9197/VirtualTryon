@@ -21,6 +21,17 @@
 
     <script>
       let _isResized = false;
+      const VALID_SKUS = [
+        'rayban_aviator_or_vert',
+        'rayban_aviator_or_vertFlash',
+        'rayban_wayfarer_havane_vert',
+        'rayban_round_cuivre_pinkBrownDegrade',
+        'rayban_wayfarer_havane_marron',
+        'marshall_noir_grisdegrade',
+        'rayban_justin_noir_bleu',
+        'rayban_new_wayfarer_noir_vertClassique_g15',
+        'rayban_justin_noir_vert'
+      ];
 
       function test_resizeCanvas() {
         // halves the height:
@@ -34,12 +45,18 @@
 
 
       function get_initialSKU(){
-        // look if a SKU is provided as a URL parameters:
         const queryString = window.location.search;
         const URLParams = new URLSearchParams(queryString);
-        const sku = URLParams.get('sku') || 'rayban_aviator_or_vertFlash';
-        console.log('Initial SKU =', sku);
-        return sku;
+        const requestedSku = URLParams.get('sku');
+
+        if (requestedSku && VALID_SKUS.includes(requestedSku)) {
+          console.log('Requested SKU =', requestedSku);
+          return requestedSku;
+        }
+
+        const fallbackSku = 'rayban_aviator_or_vert';
+        console.log('Using fallback SKU =', fallbackSku);
+        return fallbackSku;
       }
 
 
@@ -73,52 +90,33 @@
           searchImageColor: 0xeeeeee,
           callbackReady: function(){
             console.log('INFO: JEELIZVTOWIDGET is ready :)');
-
-            // add a LUT to change video rendering:
-            //JEELIZVTOWIDGET.set_LUT('images/LUTs/LUTGrayscale.png');
-            //JEELIZVTOWIDGET.set_LUT('images/LUTs/LUTImprove.jpg');
           },
-          onError: function(errorLabel){ // this function catches errors, so you can display custom integrated messages
+          onError: function(errorLabel){
+            console.error('Jeeliz error:', errorLabel);
             alert('An error happened. errorLabel =' + errorLabel)
-            switch(errorLabel) {
-              case 'WEBCAM_UNAVAILABLE':
-                // the user has no camera, or does not want to share it.
-                break;
-          
-              case 'NOFILE':
-                // the user send an image, but it is not here
-                break;
 
-              case 'WRONGFILEFORMAT':
-                // the user upload a file which is not an image or corrupted
-                break;
-
-              case 'INVALID_SKU':
-                // the provided SKU does not match with a glasses model
-                break;
-
-              case 'FALLBACK_UNAVAILABLE':
-                // we cannot switch to file upload mode. browser too old?
-                break;
-
-              case 'PLACEHOLDER_NULL_WIDTH':
-              case 'PLACEHOLDER_NULL_HEIGHT':
-                // Something is wrong with the placeholder
-                // (element whose id='JeelizVTOWidget')
-                break;
-                
-              case 'FATAL':
-              default:
-                // a bit error happens:(
-                break;
-            } // end switch
-          } // end onError()
-        }) // end JEELIZVTOWIDGET.start call
-      } // end main()
+            if (errorLabel === 'INVALID_SKU') {
+              console.warn('Retrying with a known-good fallback SKU');
+              JEELIZVTOWIDGET.start({
+                isShadow: get_isShadow(),
+                sku: 'rayban_aviator_or_vert',
+                searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target512.jpg',
+                searchImageColor: 0xeeeeee,
+                callbackReady: function(){
+                  console.log('INFO: JEELIZVTOWIDGET is ready with fallback SKU :)');
+                },
+                onError: function(err){
+                  alert('Fallback failed. errorLabel =' + err);
+                }
+              });
+            }
+          }
+        });
+      }
 
 
       function load_modelBySKU(){
-        const sku = prompt('Please enter a glasses model SKU:', 'rayban_wayfarer_havane_marron');
+        const sku = prompt('Please enter a glasses model SKU:', 'rayban_aviator_or_vert');
         if (sku){
           JEELIZVTOWIDGET.load(sku);
         }
