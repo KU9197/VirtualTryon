@@ -21,17 +21,7 @@
 
     <script>
       let _isResized = false;
-      const VALID_SKUS = [
-        'rayban_aviator_or_vert',
-        'rayban_aviator_or_vertFlash',
-        'rayban_wayfarer_havane_vert',
-        'rayban_round_cuivre_pinkBrownDegrade',
-        'rayban_wayfarer_havane_marron',
-        'marshall_noir_grisdegrade',
-        'rayban_justin_noir_bleu',
-        'rayban_new_wayfarer_noir_vertClassique_g15',
-        'rayban_justin_noir_vert'
-      ];
+      const LOCAL_MODEL_PATH = 'glasses3D/glasses1.json';
 
       function test_resizeCanvas() {
         // halves the height:
@@ -49,14 +39,13 @@
         const URLParams = new URLSearchParams(queryString);
         const requestedSku = URLParams.get('sku');
 
-        if (requestedSku && VALID_SKUS.includes(requestedSku)) {
+        if (requestedSku) {
           console.log('Requested SKU =', requestedSku);
-          return requestedSku;
         }
 
-        const fallbackSku = 'rayban_aviator_or_vert';
-        console.log('Using fallback SKU =', fallbackSku);
-        return fallbackSku;
+        // Use a local static model instead of remote GlassesDB SKU fetches,
+        // because direct browser requests to glassesdbcached.jeeliz.com are blocked by CORS/502.
+        return null;
       }
 
 
@@ -77,6 +66,11 @@
       }
 
 
+      function load_local_model() {
+        JEELIZVTOWIDGET.load_modelStandalone(LOCAL_MODEL_PATH);
+      }
+
+
       // entry point:
       function main() {
         if (!check_secure_context()) {
@@ -85,30 +79,19 @@
 
         JEELIZVTOWIDGET.start({
           isShadow: get_isShadow(),
-          sku: get_initialSKU(),
-          searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target512.jpg',
+          searchImageMask: 'images/target.png',
           searchImageColor: 0xeeeeee,
           callbackReady: function(){
             console.log('INFO: JEELIZVTOWIDGET is ready :)');
+            load_local_model();
           },
           onError: function(errorLabel){
             console.error('Jeeliz error:', errorLabel);
             alert('An error happened. errorLabel =' + errorLabel)
 
             if (errorLabel === 'INVALID_SKU') {
-              console.warn('Retrying with a known-good fallback SKU');
-              JEELIZVTOWIDGET.start({
-                isShadow: get_isShadow(),
-                sku: 'rayban_aviator_or_vert',
-                searchImageMask: 'https://appstatic.jeeliz.com/jeewidget/images/target512.jpg',
-                searchImageColor: 0xeeeeee,
-                callbackReady: function(){
-                  console.log('INFO: JEELIZVTOWIDGET is ready with fallback SKU :)');
-                },
-                onError: function(err){
-                  alert('Fallback failed. errorLabel =' + err);
-                }
-              });
+              console.warn('Retrying with a local static model file');
+              load_local_model();
             }
           }
         });
