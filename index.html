@@ -4,74 +4,39 @@
     <title>JEELIZ VTO WIDGET INTEGRATION DEMO</title>
     <meta charset='utf-8' />
 
-    <!-- Forbid resize on pinch with IOS Safari: -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"/>
-    
-    <!-- INCLUDE MAIN SCRIPT: -->
+
     <script src='dist/JeelizVTOWidget.js'></script>
-
-    <!-- For icons adjust fame or resize canvas -->
     <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
-
-    <!-- Font for the header only: -->
     <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
-    
-    <!-- main stylesheet: -->
     <link rel='stylesheet' href='css/JeelizVTOWidget.css' />
 
     <script>
       let _isResized = false;
 
-      // Local model mapping so the page can swap glasses using ?sku=... without relying on
-      // the blocked external GlassesDB browser endpoint.
-      const DEFAULT_MODEL = 'glasses3D/glasses1.json';
-      const MODEL_BY_SKU = {
-        default: DEFAULT_MODEL,
-        rayban_aviator_or_vert: 'glasses3D/glasses1.json',
-        rayban_wayfarer_havane_vert: 'glasses3D/glasses1.json',
-        aliexpress_clubmaster_style_gold_black: 'glasses3D/glasses3Textured.json',
-        glasses1: 'glasses3D/glasses1.json',
-        glasses3Textured: 'glasses3D/glasses3Textured.json'
-      };
+      function getModelUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const sku = params.get('sku');
 
-    function getModelUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const sku = params.get('sku');
-
-  if (!sku) {
-    return 'glasses3D/glasses1.json';
-  }
-
-  return '/api/model?sku=' + encodeURIComponent(sku);
-}
-
-        // Allow direct model file paths too.
-        if (sku.toLowerCase().endsWith('.json')) {
-          return sku;
+        if (!sku) {
+          return 'glasses3D/glasses1.json';
         }
 
-        const selectedModel = MODEL_BY_SKU[sku] || MODEL_BY_SKU.default;
-        console.log('Selected model for sku =', sku, '->', selectedModel);
-        return selectedModel;
+        return '/api/model?sku=' + encodeURIComponent(sku);
       }
 
       function test_resizeCanvas() {
-        // halves the height:
         let halfHeightPx = Math.round(window.innerHeight / 2).toString() + 'px';
-        
         const domWidget = document.getElementById('JeelizVTOWidget');
         domWidget.style.maxHeight = (_isResized) ? 'none' : halfHeightPx;
-
         _isResized = !_isResized;
       }
 
-
-      function get_isShadow(){
+      function get_isShadow() {
         const queryString = window.location.search;
         const URLParams = new URLSearchParams(queryString);
         return URLParams.get('isHideShadow') ? false : true;
       }
-
 
       function check_secure_context() {
         const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -82,14 +47,6 @@
         return true;
       }
 
-
-      function load_selected_model() {
-        const modelPath = get_model_from_query();
-        JEELIZVTOWIDGET.load_modelStandalone(modelPath);
-      }
-
-
-      // entry point:
       function main() {
         if (!check_secure_context()) {
           return;
@@ -99,42 +56,34 @@
           isShadow: get_isShadow(),
           searchImageMask: 'images/target.png',
           searchImageColor: 0xeeeeee,
-         callbackReady: function () {
-  console.log('INFO: JEELIZVTOWIDGET is ready :)');
-  JEELIZVTOWIDGET.load_modelStandalone(getModelUrl());
-},
-        onError: function (errorLabel) {
-  console.error('Jeeliz error:', errorLabel);
+          callbackReady: function () {
+            console.log('INFO: JEELIZVTOWIDGET is ready :)');
+            JEELIZVTOWIDGET.load_modelStandalone(getModelUrl());
+          },
+          onError: function (errorLabel) {
+            console.error('Jeeliz error:', errorLabel);
 
-  if (errorLabel === 'INVALID_SKU') {
-    console.warn('Fallback to default local model');
-    JEELIZVTOWIDGET.load_modelStandalone('glasses3D/glasses1.json');
-  }
-}
+            if (errorLabel === 'INVALID_SKU') {
+              console.warn('Fallback to default local model');
+              JEELIZVTOWIDGET.load_modelStandalone('glasses3D/glasses1.json');
+            }
           }
         });
       }
-
     </script>
   </head>
 
   <body onload="main()">
     <div class='content'>
-
-
       <div class='header'>
         <div class="headerTitle">
           Jeeliz VTO Widget
-        </div>      
+        </div>
       </div>
 
-
-      <!-- Please keep the same element IDs so that JEELIZVTOWIDGET can extract them from the DOM -->
-
-      <!-- BEGIN JEELIZVTOWIDGET -->
       <div id='JeelizVTOWidget'>
         <canvas id='JeelizVTOWidgetCanvas'></canvas>
-        
+
         <div class='JeelizVTOWidgetControls JeelizVTOWidgetControlsTop'>
           <button id='JeelizVTOWidgetAdjust'>
             <div class="buttonIcon"><i class="fas fa-arrows-alt"></i></div>Adjust
@@ -155,7 +104,6 @@
               LOADING...
            </div>
         </div>
-
       </div>
     </div>
   </body>
