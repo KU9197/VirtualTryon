@@ -99,18 +99,18 @@
           isShadow: get_isShadow(),
           searchImageMask: 'images/target.png',
           searchImageColor: 0xeeeeee,
-          callbackReady: function(){
-            console.log('INFO: JEELIZVTOWIDGET is ready :)');
-            load_selected_model();
-          },
-          onError: function(errorLabel){
-            console.error('Jeeliz error:', errorLabel);
-            alert('An error happened. errorLabel =' + errorLabel)
+         callbackReady: function () {
+  console.log('INFO: JEELIZVTOWIDGET is ready :)');
+  JEELIZVTOWIDGET.load_modelStandalone(getModelUrl());
+},
+        onError: function (errorLabel) {
+  console.error('Jeeliz error:', errorLabel);
 
-            if (errorLabel === 'INVALID_SKU') {
-              console.warn('Retrying with local fallback model');
-              load_selected_model();
-            }
+  if (errorLabel === 'INVALID_SKU') {
+    console.warn('Fallback to default local model');
+    JEELIZVTOWIDGET.load_modelStandalone('glasses3D/glasses1.json');
+  }
+}
           }
         });
       }
